@@ -1,6 +1,6 @@
 import * as digitalocean from '@pulumi/digitalocean';
-import * as docker from '@pulumi/docker';
 import { makeMachine } from './src/machine';
+import { makeWebService } from './src/web-service';
 
 const region = digitalocean.Region.SFO3;
 const sshKeyName = 'terraform-hw';
@@ -12,42 +12,47 @@ const {
   region,
   sshKeyName,
   keyPath: './keys/hello_do_docker',
+  letsEncryptEmail: 'aaron.kumavis@gmail.com',
 });
 
-//
-// example guest container
-//
-const args = {
-  serviceName: 'example-whoami',
-  containerName: 'example-whoami',
+makeWebService({
+  serviceName:  'example-whoami',
+  imageName: 'traefik/whoami',
   hostname: 'whoami.playground.kumavis.me',
-};
-const dockerImageWhoami = new docker.RemoteImage(args.serviceName, { name: 'traefik/whoami' }, { provider: dockerProvider });
-const whoami = new docker.Container(args.serviceName, {
-  image: dockerImageWhoami.imageId,
-  name: args.containerName,
-  ports: [{
-    internal: 80,
-  }],
-  labels: [
-    {
-        label: "traefik.enable",
-        value: "true",
-    },
-    {
-        label: `traefik.http.routers.${args.containerName}.rule`,
-        value: `Host(\`${args.hostname}\`)`,
-    },
-    {
-        label: `traefik.http.routers.${args.containerName}.entrypoints`,
-        value: "websecure",
-    },
-    {
-        label: `traefik.http.routers.${args.containerName}.tls.certresolver`,
-        value: "stagingresolver",
-    },
-],
-}, { provider: dockerProvider });
+  provider: dockerProvider,
+});
+
+makeWebService({
+  serviceName:  'example-starwars',
+  imageName: 'modem7/docker-starwars',
+  hostname: 'starwars.playground.kumavis.me',
+  internalPort: 8080,
+  provider: dockerProvider,
+});
+
+makeWebService({
+  serviceName:  'example-cats',
+  imageName: 'goncalommarques/flask-cat-gif',
+  hostname: 'cats.playground.kumavis.me',
+  internalPort: 5000,
+  provider: dockerProvider,
+});
+
+makeWebService({
+  serviceName:  'example-dockercraft',
+  imageName: 'rajchaudhuri/voxel-dockerclient',
+  hostname: 'dockercraft.playground.kumavis.me',
+  internalPort: 8080,
+  provider: dockerProvider,
+  extraArgs: {
+    volumes: [
+      {
+          hostPath: '/var/run/docker.sock',
+          containerPath: '/var/run/docker.sock',
+      },
+    ],
+  }
+});
 
 
 export const dropletIp = reservedIp.ipAddress;

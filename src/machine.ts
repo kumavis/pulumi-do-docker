@@ -14,9 +14,11 @@ interface MachineOpts {
   region: digitalocean.Region;
   sshKeyName: string;
   keyPath: string;
+  letsEncryptEmail: string;
 }
 
 export const makeMachine = (opts: MachineOpts) => {
+  const { letsEncryptEmail } = opts;
 
   const sshKey = digitalocean.getSshKeyOutput({
     name: opts.sshKeyName,
@@ -83,6 +85,9 @@ export const makeMachine = (opts: MachineOpts) => {
       droplet.dropletUrn,
       reservedIp.reservedIpUrn,
     ],
+  }, {
+    // workaround for https://github.com/pulumi/pulumi-digitalocean/issues/946
+    ignoreChanges: ["resources"],
   });
 
   const dockerProvider = new docker.Provider('docker', {
@@ -96,7 +101,7 @@ export const makeMachine = (opts: MachineOpts) => {
     dependsOn: cloudInitDoneCheck,
   });
 
-  setupBase({ provider: dockerProvider });
+  setupBase({ provider: dockerProvider, letsEncryptEmail });
 
   return {
     droplet,
