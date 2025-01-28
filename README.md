@@ -1,7 +1,38 @@
-howto:
-  specify vars unencrypted? but just git ignored?
+hello world example of running docker containers on digitalocean.
+uses Traefik for routing + letsencrypt SSL.
 
-situation:
-  lost state (only repo)
-  full standup with do+docker from scratch
-  view plan
+given a digitalocean API key,
+creates a machine and deploys containers.
+
+with DNS configured,
+"webservice" containers automatically get SSL certs and routing based on the hostname.
+config looks like this:
+
+```ts
+makeWebService({
+  serviceName:  'example-cats',
+  imageName: 'goncalommarques/flask-cat-gif',
+  hostname: 'cats.playground.kumavis.me',
+  internalPort: 5000,
+  provider: dockerProvider,
+});
+```
+
+`pulumi up` applies the changes.
+
+
+### setup
+- install pulumi
+- pulumi login --local
+
+- git clone (this repo) + npm install
+- pulumi config set --secret digitalocean:token 'your_api_key'
+
+- modify config to your liking
+- `pulumi up`
+- after you get your ip address, point your dns to it
+- be sure to point A thing.com and A *.thing.com to your ip
+- letsencrypt will fail at first because the IP address wasnt ready, idk something
+
+### ongoing
+- make changes, `pulumi up`
