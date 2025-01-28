@@ -36,3 +36,6 @@ makeWebService({
 
 ### ongoing
 - make changes, `pulumi up`
+
+### notes
+there are some utility scripts in `./scripts` but they require `PULUMI_CONFIG_PASSPHRASE` env var set
